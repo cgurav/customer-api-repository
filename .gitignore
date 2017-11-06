@@ -1,0 +1,15 @@
+**/.metadata/
+**/catalog/
+**/.settings/
+*.classpath
+*.project
+**/target/
+.mule/
+*.prefs
+studio_id.xml
+**/resources/common-schema/
+**/target/
+**/studio_id.xml
+**/mule-project.xml
+**/*.log
+**/catalog/
