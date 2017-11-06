@@ -8,9 +8,11 @@ Introduction
 This document provides the details about the Customer Details API. 
 **Developer Portal:** Please visit API developer portal at  [customer-api-developer-portal](https://anypoint.mulesoft.com/apiplatform/self-096/#/portals/organizations/56870422-47e0-4b5b-9760-aab6e0a0987f/apis/68806361/versions/5290380) for more details
 
-**API Portal:** https://anypoint.mulesoft.com/apiplatform/self-096/#/portals/organizations/56870422-47e0-4b5b-9760-aab6e0a0987f/apis/68806361/versions/5290380
+**API Portal:** 
+https://anypoint.mulesoft.com/apiplatform/self-096/#/portals/organizations/56870422-47e0-4b5b-9760-aab6e0a0987f/apis/68806361/versions/5290380
 
-**API Console:** http://customer-details-api.cloudhub.io/console/
+**API Console:** 
+http://customer-details-api.cloudhub.io/console/
 
 Overview
 --------
