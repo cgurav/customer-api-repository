@@ -1,0 +1,41 @@
+#%RAML 1.0 ResourceType
+
+description: Entity representing a <<resourcePathName|!singularize>>
+get:
+  description: Get the <<resourcePathName|!singularize>>
+    with <<resourcePathName|!singularize>>Id =
+    {<<resourcePathName|!singularize>>Id}
+  responses:   
+    200:
+      body:
+        type: <<resourcePathName|!singularize>>
+        example: <<exampleItem>>
+    500:
+      body:
+        type: <<genericError>>
+        example: <<exampleError>>
+put:
+  description: Update the <<resourcePathName|!singularize>>
+    with <<resourcePathName|!singularize>>Id =
+    {<<resourcePathName|!singularize>>Id} 
+  body: 
+    type: <<resourcePathName|!singularize>> 
+  responses:
+    200:
+      body:
+        type: <<resourcePathName|!singularize>>
+        example: <<exampleItem>>
+    500:
+      body:
+        type: <<genericError>>
+        example: <<exampleError>>
+delete:
+  description: Delete the <<resourcePathName|!singularize>>
+    with <<resourcePathName|!singularize>>Id =
+    {<<resourcePathName|!singularize>>Id}  
+  responses:
+    204: 
+    500:
+      body:
+        type: <<genericError>>
+        example: <<exampleError>>

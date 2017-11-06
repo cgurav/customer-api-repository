@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-platform-gw="http://www.mulesoft.org/schema/mule/api-platform-gw"
+	xmlns:mule-ss="http://www.mulesoft.org/schema/mule/spring-security" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:ss="http://www.springframework.org/schema/security"
+	
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/api-platform-gw http://www.mulesoft.org/schema/mule/api-platform-gw/current/mule-api-platform-gw.xsd http://www.mulesoft.org/schema/mule/spring-security http://www.mulesoft.org/schema/mule/spring-security/current/mule-spring-security.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+
+	<context:property-placeholder location="config.properties" ignore-unresolvable="true"/>	
+	
+	<spring:beans>
+	    <ss:authentication-manager alias="authenticationManager">
+	      <ss:authentication-provider>
+	        <ss:user-service id="userService">
+	          <ss:user name="${consumer.username}" password="${consumer.password}" authorities="CONSUMER_ROLE" />
+	          <ss:user name="${custrep.username}" password="${custrep.password}" authorities="CUSTREP_ROLE" />
+	          <ss:user name="${admin.username}" password="${admin.password}" authorities="ADMIN_ROLE" />
+	        </ss:user-service>
+	      </ss:authentication-provider>
+	    </ss:authentication-manager>
+	</spring:beans>
+		
+	<mule-ss:security-manager name="muleSecurityManager" doc:name="Spring Security Provider">
+	    <mule-ss:delegate-security-provider name="memory-provider" delegate-ref="authenticationManager" />
+	</mule-ss:security-manager>	
+	
+	<http:listener-config name="customer-api-httpListenerConfig" host="0.0.0.0" port="${http.port}" doc:name="HTTP Listener Configuration" />
+    <apikit:config name="customer-api-config" raml="customer-api.raml" consoleEnabled="false" doc:name="Router"  keepRamlBaseUri="false"/>
+    <http:request-config name="HTTP_Request_Configuration" host="${provider.hostname}" port="${provider.port}" doc:name="HTTP Request Configuration"/>
+
+<!--     <api-platform-gw:api apiName="Customer Details API" version="1.0" flowRef="customer-api-main" create="true" doc:name="API Autodiscovery" apikitRef="customer-api-config"/> -->
+
+
+</mule>

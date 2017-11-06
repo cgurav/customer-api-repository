@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:mule-ss="http://www.mulesoft.org/schema/mule/spring-security" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/spring-security http://www.mulesoft.org/schema/mule/spring-security/current/mule-spring-security.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <flow name="customer-api-main">
+        <http:listener config-ref="customer-api-httpListenerConfig" path="/api/*" doc:name="HTTP" />
+        <set-variable variableName="logPrefix" value="CUSTOMER-API - #[message.inboundProperties.'http.request.uri'] - #[message.id]" doc:name="Set Log Prefix" />
+        <http:basic-security-filter realm="mule-realm" doc:name="Basic Auth Filter" />
+        <apikit:router config-ref="customer-api-config" doc:name="APIkit Router" />
+        <exception-strategy ref="customer-api-apiKitGlobalExceptionMapping" doc:name="customer-api-apiKitGlobalExceptionMapping" />
+    </flow>
+    <flow name="customer-api-console">
+        <http:listener config-ref="customer-api-httpListenerConfig" path="/console/*" doc:name="HTTP" />
+        <apikit:console config-ref="customer-api-config" doc:name="APIkit Console" />
+    </flow>
+        <flow name="get:/customers:customer-api-config">
+            <mule-ss:authorization-filter requiredAuthorities="CONSUMER_ROLE,CUSTREP_ROLE,ADMIN_ROLE" doc:name="Consumer Role Check"/>
+        <set-variable variableName="isThin" value="#[message.inboundProperties.'http.query.params'.thin]" doc:name="Set - thin"/>
+            <logger message="#[flowVars.logPrefix] : Get Customers - Start" level="INFO" doc:name="Log - Start"/>
+            <http:request config-ref="HTTP_Request_Configuration" path="/api/syscustomers" method="GET" doc:name="Call - Provider API - Get Customers"/>
+        <choice doc:name="Check - isThin">
+            <when expression="#[flowVars.isThin == 'true']">
+                <dw:transform-message doc:name="Build - Thin Response">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%input payload application/json
+%output application/json
+---
+payload map {
+	"customerId" : $.customerId,
+	"firstName" : $.firstName,
+	"lastName" : $.lastName
+}]]></dw:set-payload>
+                </dw:transform-message>
+            </when>
+            <otherwise>
+                <logger message="#[flowVars.logPrefix] : Sending Complete Customer Details" level="INFO" doc:name="Log - Full Result"/>
+            </otherwise>
+        </choice>
+            <logger message="#[flowVars.logPrefix] : Get Customers - End" level="INFO" doc:name="Log - End"/>
+            <exception-strategy ref="customer-api-error-handler" doc:name="customer-api-error-handler"/>
+        </flow>
+        <flow name="post:/customers:application/json:customer-api-config">
+            <mule-ss:authorization-filter requiredAuthorities="ADMIN_ROLE" doc:name="Admin Role Check"/>
+            <logger message="#[flowVars.logPrefix] : Add a new Customer - Start" level="INFO" doc:name="Log - Start"/>
+            <http:request config-ref="HTTP_Request_Configuration" path="/api/syscustomers" method="POST" doc:name="Call - Provider API - Create Customer"/>
+            <logger message="#[flowVars.logPrefix] : Add a new Customer - End" level="INFO" doc:name="Log - End"/>
+            <exception-strategy ref="customer-api-error-handler" doc:name="customer-api-error-handler"/>
+        </flow>
+        <flow name="get:/customers/{customerId}:customer-api-config">
+            <mule-ss:authorization-filter requiredAuthorities="CUSTREP_ROLE,ADMIN_ROLE" doc:name="Customer Rep Role Check"/>
+            <logger message="#[flowVars.logPrefix] : Get Customer - Start" level="INFO" doc:name="Log - Start"/>
+            <http:request config-ref="HTTP_Request_Configuration" path="/api/syscustomers/{syscustomerId}" method="GET" doc:name="Call - Provider API - Get Customer">
+                <http:request-builder>
+                    <http:uri-param paramName="syscustomerId" value="#[message.inboundProperties.'http.uri.params'.customerId]"/>
+                </http:request-builder>
+            </http:request>
+            <logger message="#[flowVars.logPrefix] : Get Customer - End" level="INFO" doc:name="Log - End"/>
+            <exception-strategy ref="customer-api-error-handler" doc:name="customer-api-error-handler"/>
+        </flow>
+        <flow name="put:/customers/{customerId}:application/json:customer-api-config">
+            <mule-ss:authorization-filter requiredAuthorities="CUSTREP_ROLE,ADMIN_ROLE" doc:name="Customer Rep Role Check"/>
+            <logger message="#[flowVars.logPrefix] : Update Customer - Start" level="INFO" doc:name="Log - Start"/>
+            <http:request config-ref="HTTP_Request_Configuration" path="/api/syscustomers/{syscustomerId}" method="PUT" doc:name="Call - Provider API -Update Customer">
+                <http:request-builder>
+                    <http:uri-param paramName="syscustomerId" value="#[message.inboundProperties.'http.uri.params'.customerId]"/>
+                </http:request-builder>
+            </http:request>
+            <logger message="#[flowVars.logPrefix] : Update Customer - End" level="INFO" doc:name="Log - End"/>
+            <exception-strategy ref="customer-api-error-handler" doc:name="customer-api-error-handler"/>
+        </flow>
+		<flow name="patch:/customers:application/json:customer-api-config">
+            <mule-ss:authorization-filter requiredAuthorities="CUSTREP_ROLE,ADMIN_ROLE" doc:name="Customer Rep Role Check"/>
+	        <logger message="#[flowVars.logPrefix] : Update a list of Customers - Start" level="INFO" doc:name="Log - Start"/>
+	        <http:request config-ref="HTTP_Request_Configuration" path="/api/syscustomers" method="PATCH" doc:name="Call - Provider API - Patch Customers">
+	        </http:request>
+	        <logger message="#[flowVars.logPrefix] : Update a list of Customers - End" level="INFO" doc:name="Log - End"/>
+	    </flow>
+        <flow name="delete:/customers/{customerId}:customer-api-config">
+            <mule-ss:authorization-filter requiredAuthorities="ADMIN_ROLE" doc:name="Admin Role Check"/>
+            <logger message="#[flowVars.logPrefix] : Delete Customer - Start" level="INFO" doc:name="Log - Start"/>
+            <http:request config-ref="HTTP_Request_Configuration" path="/api/syscustomers/{syscustomerId}" method="DELETE" doc:name="Call - Provider API -Delete Customer">
+                <http:request-builder>
+                    <http:uri-param paramName="syscustomerId" value="#[message.inboundProperties.'http.uri.params'.customerId]"/>
+                </http:request-builder>
+            </http:request>
+            <logger message="#[flowVars.logPrefix] : Delete Customer - End" level="INFO" doc:name="Log - End"/>
+            <exception-strategy ref="customer-api-error-handler" doc:name="customer-api-error-handler"/>
+        </flow>
+        
+    <apikit:mapping-exception-strategy name="customer-api-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-variable variableName="httpReason" value="#['Bad Request']" doc:name="Set HTTP Reason" />
+            <flow-ref name="customer-api:/process-error" doc:name="customer-api:/process-error" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="401">
+            <apikit:exception value="org.mule.api.security.UnauthorisedException" />
+            <set-variable variableName="httpReason" value="#['Unauthorised']" doc:name="Set HTTP Reason" />
+            <flow-ref name="customer-api:/process-error" doc:name="customer-api:/process-error" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="403">
+            <apikit:exception value="org.mule.api.security.NotPermittedException" />
+            <set-variable variableName="httpReason" value="#['Not Permitted']" doc:name="Set HTTP Reason" />
+            <flow-ref name="customer-api:/process-error" doc:name="customer-api:/process-error" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-variable variableName="httpReason" value="#['Not Found']" doc:name="Set HTTP Reason" />
+            <flow-ref name="customer-api:/process-error" doc:name="customer-api:/process-error" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-variable variableName="httpReason" value="#['Method Not Allowed']" doc:name="Set HTTP Reason" />
+            <flow-ref name="customer-api:/process-error" doc:name="customer-api:/process-error" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-variable variableName="httpReason" value="#['Not Acceptable']" doc:name="Set HTTP Reason" />
+            <flow-ref name="customer-api:/process-error" doc:name="customer-api:/process-error" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-variable variableName="httpReason" value="#['Unsupported Media Type']" doc:name="Set HTTP Reason" />
+            <flow-ref name="customer-api:/process-error" doc:name="customer-api:/process-error" />
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    
+    <sub-flow name="customer-api:/process-error">
+        <set-variable variableName="correlationId" value="#[message.id]" doc:name="Set - correlationId" />
+        <logger message="CUSTOMER-API - #[message.id] #[flowVars.httpReason] #[flowVars.errorMessage != empty ? ': ' + flowVars.errorMessage : '']" level="ERROR" doc:name="Log - Exception" />
+        <dw:transform-message doc:name="Set - Response">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	errorCode: "ERROR",
+	errorMessage: flowVars.httpReason,
+	correlationId: flowVars.correlationId
+}]]></dw:set-payload>
+        </dw:transform-message>
+    </sub-flow>
+    <catch-exception-strategy name="customer-api-error-handler">
+        <set-variable variableName="errorMessage" value="#[exception.cause != null ? exception.cause.message : exception.message]" doc:name="Get Error Message" />
+        <set-variable variableName="correlationId" value="#[message.id]" doc:name="Set - CorrelationId" />
+        <logger message="#[flowVars.logPrefix] : Exception - #[flowVars.errorMessage]" level="ERROR" doc:name="Log - Error Message" />
+        <dw:transform-message doc:name="Build - Error Response">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	errorCode: "ERROR",
+	errorMessage: flowVars.errorMessage
+		when (flowVars.errorMessage?)
+		otherwise "Unknown",
+	correlationId: flowVars.correlationId
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <json:object-to-json-transformer doc:name="Object to JSON" />
+        <set-property propertyName="http.status" value="#[500]" doc:name="Set HTTP Status 500" />
+    </catch-exception-strategy>
+
+</mule>

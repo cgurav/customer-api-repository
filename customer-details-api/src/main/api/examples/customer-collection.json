@@ -1,0 +1,24 @@
+[
+  {
+    "customerId" : "007",
+    "firstName" : "Chid",
+    "lastName" : "Gurav",
+    "customerAddress" : {
+        "streetAddress" : "44 Belmore Street",
+        "suburb" : "Burwood",
+        "city" : "Sydney",
+        "country" : "Australia"
+    }
+  },
+  {
+    "customerId" : "123",
+    "firstName" : "Sherlok",
+    "lastName" : "Holmes",
+    "customerAddress" : {
+        "streetAddress" : "221B Bakers Street",
+        "suburb" : "Merylebone",
+        "city" : "Sydney",
+        "country" : "Australia"
+    }
+  }
+]

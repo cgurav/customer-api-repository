@@ -1,0 +1,11 @@
+{
+  "customerId" : "007",
+  "firstName" : "Chid",
+  "lastName" : "Gurav",
+  "customerAddress" : {
+      "streetAddress" : "44 Belmore Street",
+      "suburb" : "Burwood",
+      "city" : "Sydney",
+      "country" : "Australia"
+  }
+}

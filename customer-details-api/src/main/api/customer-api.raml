@@ -1,0 +1,92 @@
+#%RAML 1.0
+title: customer-api
+mediaType: application/json
+baseUri: http://localhost:8081/api/customers
+version: 1.0
+
+description: |
+  This API provides the following functionalities
+    1. List the customers
+    2. Create a new customer
+    3. Update a customer
+    4. Delete a customer
+
+securitySchemes: 
+  basic:
+    type: Basic Authentication
+
+resourceTypes: 
+  collection: !include resourcetypes/collection.raml
+  collection-item: !include resourcetypes/collection-item.raml
+
+traits: 
+  compliant: !include traits/compliance.raml
+
+types:
+  address:
+    properties:
+      streetAddress: string
+      suburb: string
+      city: string
+      country: string
+      
+  customer:
+    properties: 
+      customerId? : string
+      firstName: string
+      lastName: string
+      customerAddress: address
+      
+  customerPatch:
+    properties:
+      customerId : string
+      firstName?: string
+      lastName?: string
+      customerAddress?: address
+ 
+  genericError: !include datatypes/genericError.raml
+  
+  #TODOs- Orders and Products
+  order:
+  orderPatch:
+  product:
+  productPatch:
+
+/customers:
+  securedBy: basic
+  is: [compliant]
+  type: 
+    collection:
+      exampleCollection: !include examples/customer-collection.json   
+      exampleItem: !include examples/customer-item.json
+      exampleError: !include examples/generic-error.json
+      genericError: genericError
+
+  /{customerId}:
+    securedBy: basic
+    is: [compliant]
+    type:
+      collection-item:
+        exampleItem: !include examples/customer-item.json
+        exampleError: !include examples/generic-error.json
+        genericError: genericError
+
+/orders:
+  securedBy: basic
+  is: [compliant]
+  type: 
+    collection:
+      exampleCollection: "[]"   
+      exampleItem: "{}"
+      exampleError: !include examples/generic-error.json
+      genericError: genericError 
+      
+/products:
+  securedBy: basic
+  is: [compliant]
+  type: 
+    collection:
+      exampleCollection: "[]"  
+      exampleItem: "{}"
+      exampleError: !include examples/generic-error.json
+      genericError: genericError        

@@ -1,0 +1,46 @@
+#%RAML 1.0 ResourceType
+
+description: Collection of <<resourcePathName>>
+get:  
+  queryParameters:
+    thin: 
+      required: false
+      enum: ["true", "false"] 
+
+  description: Get a list of <<resourcePathName>>
+  responses:   
+    200:
+      body:
+        type: <<resourcePathName|!singularize>>[]
+        example: <<exampleCollection>>
+    500:
+      body:
+        type: <<genericError>>
+        example: <<exampleError>>
+post:
+  description: Add a new <<resourcePathName|!singularize>> 
+  body: 
+    type: <<resourcePathName|!singularize>> 
+  responses:
+    201:
+      body:
+        type: <<resourcePathName|!singularize>>
+        example: <<exampleItem>>
+    500:
+      body:
+        type: <<genericError>>
+        example: <<exampleError>>
+
+patch:
+  description: Update list of <<resourcePathName>> 
+  body: 
+    type: <<resourcePathName|!singularize>>Patch[]
+  responses:
+    200:
+      body:
+        type: <<resourcePathName|!singularize>>[]
+        example: <<exampleCollection>>
+    500:
+      body:
+        type: <<genericError>>
+        example: <<exampleError>>
