@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <flow name="customer-provider-api-main">
+        <http:listener config-ref="customer-provider-api-httpListenerConfig" path="/api/*" doc:name="HTTP" />
+        <apikit:router config-ref="customer-provider-api-config" doc:name="APIkit Router" />
+        <exception-strategy ref="customer-provider-api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy" />
+    </flow>
+    <flow name="customer-provider-api-console">
+        <http:listener config-ref="customer-provider-api-httpListenerConfig" path="/console/*" doc:name="HTTP" />
+        <apikit:console config-ref="customer-provider-api-config" doc:name="APIkit Console" />
+    </flow>
+        <flow name="get:/syscustomers/{syscustomerId}:customer-provider-api-config">
+            <objectstore:retrieve config-ref="ObjectStore__Connector" key="#[message.inboundProperties.'http.uri.params'.syscustomerId]" doc:name="Retrieve- Customer"/>
+            <json:object-to-json-transformer doc:name="Object to JSON"/>
+        </flow>
+        <flow name="put:/syscustomers/{syscustomerId}:application/json:customer-provider-api-config">
+            <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        <expression-component doc:name="Set - Customer Id"><![CDATA[//Reset the CustomerID to avoid uniqueness ambiguity
+payload.customerId = message.inboundProperties.'http.uri.params'.syscustomerId;]]></expression-component>
+            <objectstore:store config-ref="ObjectStore__Connector" key="#[message.inboundProperties.'http.uri.params'.syscustomerId]" value-ref="#[payload]" overwrite="true" doc:name="Update - Customer"/>
+            <objectstore:retrieve config-ref="ObjectStore__Connector" key="#[message.inboundProperties.'http.uri.params'.syscustomerId]" doc:name="Retrieve - Customer"/>
+            <json:object-to-json-transformer doc:name="Object to JSON"/>
+        </flow>
+        <flow name="delete:/syscustomers/{syscustomerId}:customer-provider-api-config">
+            <objectstore:remove config-ref="ObjectStore__Connector" key="#[message.inboundProperties.'http.uri.params'.syscustomerId]" doc:name="Delete - Customer" ignoreNotExists="true"/>
+        </flow>
+        <flow name="get:/syscustomers:customer-provider-api-config">
+            <enricher target="#[flowVars.keys]" doc:name="Enricher: keys">
+                <objectstore:retrieve-all-keys config-ref="ObjectStore__Connector" doc:name="Get - All Keys"/>
+            </enricher>
+            <set-variable variableName="listOfCustomer" value="#[new java.util.ArrayList()]" doc:name="Set - listOfCustomers"/>
+            <foreach collection="#[flowVars.keys]" doc:name="Each: key">
+                <objectstore:retrieve config-ref="ObjectStore__Connector" key="#[payload]" doc:name="Get - Customer"/>
+                <logger message="Customer Details : #[payload]" level="INFO" doc:name="Log - Customer Details"/>
+                <expression-component doc:name="Add - Customer to List"><![CDATA[flowVars.listOfCustomer.add(payload);]]></expression-component>
+            </foreach>
+            <dw:transform-message doc:name="Build - Response">
+                <dw:set-payload><![CDATA[%dw 1.0
+    %output application/json
+    ---
+    flowVars.listOfCustomer]]></dw:set-payload>
+            </dw:transform-message>
+        </flow>
+        <flow name="post:/syscustomers:application/json:customer-provider-api-config">
+            <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+            <expression-component doc:name="Add - customerId"><![CDATA[payload.customerId = message.id;]]></expression-component>
+            <objectstore:store config-ref="ObjectStore__Connector" key="#[message.id]" value-ref="#[payload]" overwrite="true" doc:name="Store - Customer"/>
+            <objectstore:retrieve config-ref="ObjectStore__Connector" key="#[message.id]" doc:name="Retrieve - Customer"/>
+            <json:object-to-json-transformer doc:name="Object to JSON"/>
+        </flow>
+    <flow name="patch:/syscustomers:application/json:customer-provider-api-config">
+        <json:json-to-object-transformer returnClass="java.util.ArrayList" doc:name="JSON to Object"/>
+        <set-variable variableName="updatedListOfCustomers" value="#[new java.util.ArrayList()]" doc:name="Set - updatedListOfCustomers"/>
+        <foreach doc:name="Each: customer">
+            <set-variable variableName="customer" value="#[payload]" doc:name="Set - customer"/>
+            <objectstore:retrieve config-ref="ObjectStore__Connector" key="#[payload.customerId]" doc:name="Retrieve - Customer"/>
+            <dw:transform-message doc:name="Update - Customer">
+                <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"customerId" : flowVars.customer.customerId,
+	"firstName" : flowVars.customer.firstName when flowVars.customer.firstName != null otherwise payload.firstName,
+	"lastName" : flowVars.customer.lastName when flowVars.customer.lastName != null otherwise payload.lastName,
+	"customerAddress" : ({
+		"streetAddress" : flowVars.customer.customerAddress.streetAddress,
+		"suburb": flowVars.customer.customerAddress.suburb,
+		"city": flowVars.customer.customerAddress.city,
+		"country": flowVars.customer.customerAddress.country
+	}) when flowVars.customer.customerAddress != null otherwise payload.customerAddress
+	
+}]]></dw:set-payload>
+            </dw:transform-message>
+            <expression-component doc:name="Add - to List"><![CDATA[flowVars.updatedListOfCustomers.add(payload);]]></expression-component>
+            <objectstore:store config-ref="ObjectStore__Connector" key="#[flowVars.customer.customerId]" value-ref="#[payload]" overwrite="true" doc:name="Store - Updated Customer"/>
+        </foreach>
+        <dw:transform-message doc:name="Build - Patch Response">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+flowVars.updatedListOfCustomers]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+    <apikit:mapping-exception-strategy name="customer-provider-api-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property" />
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property" />
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property" />
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property" />
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload" />
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property" />
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload" />
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+</mule>

@@ -1,0 +1,66 @@
+#%RAML 1.0
+title: customer-provider-api
+description: Customer provider API - system of records
+mediaType: application/json
+
+types:
+  address:
+    properties:
+      streetAddress: string
+      suburb: string
+      city: string
+      country: string
+      
+  customer:
+    properties: 
+      customerId?: string
+      firstName: string
+      lastName: string
+      customerAddress: address
+      
+  customerPatch:
+    properties:
+      customerId: string
+      firstName?: string
+      lastName?: string
+      customerAddress?: address
+
+
+/syscustomers:
+  get:
+    description: Get customers from backend systems
+    responses: 
+      200:
+        body: customer[]
+  post:
+    description: Add customer to backend systems
+    body:
+      type: customer
+    responses: 
+      201: 
+        body: customer        
+  patch:
+    description: Update list of customers to backend systems
+    body:
+      type: customerPatch[]
+    responses: 
+      200: 
+        body: customer[]
+  
+  /{syscustomerId}:
+    get:
+      responses: 
+        200:
+          body: customer      
+    put:
+      body: customer
+      responses: 
+        200:
+          body: customer
+    delete:
+      responses: 
+        204:
+        
+            
+        
+          

@@ -1,0 +1,57 @@
+[
+  {
+    "customerId" : "3bcec820-c202-11e7-a45d-20c9d07e42cd",
+    "firstName" : "Chid",
+    "lastName" : "Gurav",
+    "customerAddress" : {
+        "streetAddress" : "44 Belmore Street",
+        "suburb" : "Burwood",
+        "city" : "Sydney",
+        "country" : "Australia"
+    }
+  },
+  {
+    "customerId" : "3abcd820-c202-11e7-a45d-20c9d07e42cd",
+    "firstName" : "Sherlok",
+    "lastName" : "Holmes",
+    "customerAddress" : {
+        "streetAddress" : "221B Bakers Street",
+        "suburb" : "Merylebone",
+        "city" : "Sydney",
+        "country" : "Australia"
+    }
+  },
+  {
+    "customerId" : "9bcec820-c202-11e7-a45d-20c9d07e42cd",
+    "firstName" : "Ross",
+    "lastName" : "Masson",
+    "customerAddress" : {
+        "streetAddress" : "4 Cavill Avenue",
+        "suburb" : "Ashfield",
+        "city" : "Sydney",
+        "country" : "Australia"
+    }
+  },
+  {
+    "customerId" : "7bcec920-c202-22e7-a45d-20c9d07e42ab",
+    "firstName" : "David",
+    "lastName" : "Morgan",
+    "customerAddress" : {
+        "streetAddress" : "14 First Avenue",
+        "suburb" : "North Sydney",
+        "city" : "Sydney",
+        "country" : "Australia"
+    }
+  },
+  {
+    "customerId" : "9xyza820-c202-11e7-a45d-20c9d07e12dc",
+    "firstName" : "Sarah",
+    "lastName" : "McMillan",
+    "customerAddress" : {
+        "streetAddress" : "54 Burwood Road",
+        "suburb" : "Burwood",
+        "city" : "Sydney",
+        "country" : "Australia"
+    }
+  }
+]

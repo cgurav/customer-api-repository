@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <flow name="init-flow:/initialise-customer-details">
+        <set-payload value="#[Thread.currentThread().getContextClassLoader().getResourceAsStream(&quot;SampleCustomers.json&quot;)]" encoding="UTF-8" mimeType="application/json" doc:name="Load - Sample Data"/>
+        <json:json-to-object-transformer returnClass="java.util.ArrayList" doc:name="JSON to Object"/>
+        <foreach doc:name="Each: customer">
+            <objectstore:store config-ref="ObjectStore__Connector" key="#[payload.customerId]" value-ref="#[payload]" overwrite="true" doc:name="Store - Each Customer"/>
+        </foreach>
+        <enricher target="#[flowVars.keys]" doc:name="Enricher: keys">
+            <objectstore:retrieve-all-keys config-ref="ObjectStore__Connector" doc:name="Get - All Keys"/>
+        </enricher>
+        <foreach collection="#[flowVars.keys]" doc:name="Each: key">
+            <objectstore:retrieve config-ref="ObjectStore__Connector" key="#[payload]" doc:name="Get - Customer"/>
+            <logger message="Customer Details : #[payload]" level="INFO" doc:name="Log - Customer Details"/>
+        </foreach>
+    </flow>
+</mule>
