@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="${http.port}" doc:name="HTTP Listener Configuration"/>
+    <flow name="customer-rep-app:/get-customer-client">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/retrieve" doc:name="HTTP"/>
+        <logger message="Retrieving Customer Details - Invoking Customer API" level="INFO" doc:name="Log - Retrieve Customer"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/api/customers/{customerId}" method="GET" doc:name="Call - Customer API">
+            <http:request-builder>
+                <http:uri-param paramName="customerId" value="#['3bcec820-c202-11e7-a45d-20c9d07e42cd']"/>
+            </http:request-builder>
+        </http:request>
+        <logger message=" Customer API Response: #[message.payloadAs(String)]" level="INFO" doc:name="Log - Retrieved Details"/>
+    </flow>
+    <flow name="customer-rep-app:/update-customer-list-client">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/updateCustomer" doc:name="HTTP"/>
+        <logger message="Updating Customer Details - Invoking Customer API" level="INFO" doc:name="Log - Update Customers"/>
+        <dw:transform-message doc:name="Build - Update Customer List">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+[
+	{
+		"customerId": "7bcec920-c202-22e7-a45d-20c9d07e42ab",
+		"customerAddress": {
+            "streetAddress": "56 Berry Street",
+            "suburb": "NorthSydney",
+            "city": "Sydney",
+            "country": "Australia"
+        }
+	},
+	{
+        "customerId": "3bcec820-c202-11e7-a45d-20c9d07e42cd",
+        "firstName": "Om",
+        "lastName" : "Gurav"
+    }
+
+]]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration" path="/api/customers" method="PATCH" doc:name="Call - Customer API"/>
+        <logger message=" Customer API Response: #[message.payloadAs(String)]" level="INFO" doc:name="Log - Updated Details"/>
+    </flow>
+</mule>
