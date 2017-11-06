@@ -23,7 +23,7 @@ Details of Components
 
 The following are the details of components to demonstrate end-to-end use cases
 
-Customer Details API:
+**Customer Details API:**
 
 This API is consumed by Consumer Apps replicating the data and user representatives using the mobile applications. This API exposes the following functionality over HTTP ReST
 
@@ -37,7 +37,7 @@ This API is consumed by Consumer Apps replicating the data and user representati
 
 5.  Delete Customer
 
-Customer Provider API:
+**Customer Provider API:**
 
 This is a Mock for Customer Provider API. This application loads some preconfigured customer details in Object-Store as initial load when the application starts.
 
@@ -45,7 +45,7 @@ The in memory object store is used as Database, maintaining Customer records.
 
 The API allows performing the corresponding CRUD operations on the data in Object-Store.
 
-Consumer App:
+**Consumer App:**
 
 This app simulates the consumer apps - invoking the Customer Details API operations. Below are the 2 simulations:
 
